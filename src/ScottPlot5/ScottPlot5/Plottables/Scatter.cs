@@ -110,7 +110,9 @@ public class Scatter(IScatterSource data) : IPlottable, IHasLine, IHasMarker, IH
         ExpandingAxisLimits limits = new(Data.GetLimits());
 
         if (FillY)
+        {
             limits.ExpandY(FillYValue);
+        }
 
         return new AxisLimits(
             left: limits.Left * ScaleX + OffsetX,
@@ -135,7 +137,9 @@ public class Scatter(IScatterSource data) : IPlottable, IHasLine, IHasMarker, IH
         }
 
         if (markerPixels.Length == 0)
+        {
             return;
+        }
 
         Pixel[] linePixels = ConnectStyle switch
         {
@@ -150,7 +154,72 @@ public class Scatter(IScatterSource data) : IPlottable, IHasLine, IHasMarker, IH
 
         if (FillY)
         {
-            FillStyle fs = new() { IsVisible = true };
+            var map = new (float x, Color color)[] {
+                (0.0F,  Colors.Red),
+                (0.5F,  Colors.Yellow),
+                (1.0F,  Colors.Green)
+            };
+
+            float xColorPosition(float xPos)
+            {
+                return (Axes.GetPixelX(xPos) - Axes.DataRect.Left)
+                    / (Axes.DataRect.Right - Axes.DataRect.Left);
+            }
+
+            Axes.GetPixelX(Axes.XAxis.Min);
+
+            float xMin = (float)Axes.XAxis.GetCoordinate(rp.DataRect.Left, rp.DataRect);
+            float xMax = (float)Axes.XAxis.GetCoordinate(rp.DataRect.Right, rp.DataRect);
+
+            Color inster(float x, (float x, Color color)[] mapData)
+            {
+                IEnumerable<(float x, Color color)> rangeData = mapData
+                    .OrderBy(i => Math.Abs(i.x - x))
+                    .Take(2);
+
+                if (rangeData.All(i => x < i.x))
+                {
+                    return rangeData
+                        .OrderBy(i => i.x)
+                        .First()
+                        .color;
+                }
+
+                if (rangeData.All(i => i.x < x))
+                {
+                    return rangeData
+                        .OrderBy(i => i.x)
+                        .Last()
+                        .color;
+                }
+
+                (float x, Color color) f = rangeData.First();
+                (float x, Color color) l = rangeData.Last();
+
+                double factor = 1.0 - (double)(l.x - x) / (l.x - f.x);
+
+                return f.color.InterpolateRgb(l.color, factor);
+            }
+
+            var newMap = map
+                .Concat(new (float x, Color color)[]{
+                    (xMin, inster(xMin, map)),
+                    (xMax, inster(xMax, map)) })
+                .Where(i => i.x >= xMin && i.x <= xMax)
+                .OrderBy(i => i.x);
+
+            FillStyle fs = new()
+            {
+                IsVisible = true,
+                Hatch = new Gradient()
+                {
+                    GradientType = GradientType.Linear,
+                    AlignmentStart = Alignment.MiddleLeft,
+                    AlignmentEnd = Alignment.MiddleRight,
+                    ColorPositions = newMap.Select(i => xColorPosition(i.x)).ToArray(),
+                    Colors = newMap.Select(i => i.color).ToArray(),
+                },
+            };
 
             PixelRect dataPxRect = new(markerPixels);
 
@@ -198,7 +267,7 @@ public class Scatter(IScatterSource data) : IPlottable, IHasLine, IHasMarker, IH
     /// <param name="right">Indicates that a line will extend to the right before rising or falling.</param>
     public static Pixel[] GetStepDisplayPixels(Pixel[] pixels, bool right)
     {
-        Pixel[] pixelsStep = new Pixel[pixels.Count() * 2 - 1];
+        var pixelsStep = new Pixel[pixels.Count() * 2 - 1];
 
         int offsetX = right ? 1 : 0;
         int offsetY = right ? 0 : 1;
