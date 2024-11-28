@@ -5,12 +5,29 @@
 /// <summary>
 /// Represents a range of values between two coordinates on a single axis
 /// </summary>
-public class CoordinateRangeMutable : IEquatable<CoordinateRangeMutable> // TODO: rename to MutableCoordinateRange or something
+public sealed class CoordinateRangeMutable(double min, double max) : IEquatable<CoordinateRangeMutable> // TODO: rename to MutableCoordinateRange or something
 {
-    public double Min { get; set; }
-    public double Max { get; set; }
-    public double Center => (Min + Max) / 2;
+    public double Min { get; set; } = min;
+    public double Max { get; set; } = max;
+
+    public double TrueMin => Math.Min(Min, Max);
+    public double TrueMax => Math.Max(Min, Max);
+    public bool IsInverted => Min > Max;
+
+    /// <summary>
+    /// Distance from <see cref="Min"/> to <see cref="Max"/> (may be negative)
+    /// </summary>
     public double Span => Max - Min;
+
+    /// <summary>
+    /// Value located in the center of the range, between <see cref="Min"/> and <see cref="Max"/> (may be negative)
+    /// </summary>
+    public double Center => (Min + Max) / 2;
+
+    /// <summary>
+    /// Distance from <see cref="Min"/> to <see cref="Max"/> (always positive)
+    /// </summary>
+    public double Length => Math.Abs(Span);
 
     // TODO: obsolete this
     public bool HasBeenSet
@@ -18,23 +35,19 @@ public class CoordinateRangeMutable : IEquatable<CoordinateRangeMutable> // TODO
 
     public CoordinateRange ToCoordinateRange => new(Min, Max);
 
-    public CoordinateRangeMutable(double min, double max)
-    {
-        Min = min;
-        Max = max;
-    }
-
     public override string ToString()
     {
-        return $"Min={Min}, Max={Max}, Span={Span}";
+        return IsInverted
+            ? $"CoordinateRangeMutable [{TrueMin}, {TrueMax}] (inverted)"
+            : $"CoordinateRangeMutable [{TrueMin}, {TrueMax}]";
     }
 
     /// <summary>
     /// Returns true if the given position is within the range (inclusive)
     /// </summary>
-    public bool Contains(double position)
+    public bool Contains(double value)
     {
-        return position >= Min && position <= Max;
+        return TrueMin <= value && value <= TrueMax;
     }
 
     // TODO: deprecate
@@ -73,7 +86,8 @@ public class CoordinateRangeMutable : IEquatable<CoordinateRangeMutable> // TODO
     }
 
     /// <summary>
-    /// This infinite inverted range is used to indicate a range that has not yet been set
+    /// This magic value is used to indicate the range has not been set.
+    /// It is equal to an inverted infinite range [∞, -∞]
     /// </summary>
     public static CoordinateRangeMutable NotSet => new(double.PositiveInfinity, double.NegativeInfinity);
 
@@ -192,6 +206,9 @@ public class CoordinateRangeMutable : IEquatable<CoordinateRangeMutable> // TODO
 
     public override int GetHashCode()
     {
-        return Min.GetHashCode() ^ Max.GetHashCode();
+        int hash = 17;
+        hash = hash * 23 + Min.GetHashCode();
+        hash = hash * 23 + Max.GetHashCode();
+        return hash;
     }
 }
