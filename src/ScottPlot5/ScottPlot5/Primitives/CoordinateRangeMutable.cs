@@ -13,7 +13,8 @@ public class CoordinateRangeMutable : IEquatable<CoordinateRangeMutable> // TODO
     public double Span => Max - Min;
 
     // TODO: obsolete this
-    public bool HasBeenSet => NumericConversion.IsReal(Span) && Span != 0;
+    public bool HasBeenSet
+        => Min != double.PositiveInfinity && Max != double.NegativeInfinity;
 
     public CoordinateRange ToCoordinateRange => new(Min, Max);
 
