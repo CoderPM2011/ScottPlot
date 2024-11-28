@@ -18,15 +18,11 @@ public class CoordinateRangeMutable : IEquatable<CoordinateRangeMutable> // TODO
 
     public CoordinateRange ToCoordinateRange => new(Min, Max);
 
-    public CoordinateRange ToRectifiedCoordinateRange => Min < Max ? new(Min, Max) : new(Max, Min);
-
     public CoordinateRangeMutable(double min, double max)
     {
         Min = min;
         Max = max;
     }
-
-    public static CoordinateRangeMutable Infinity => new(double.NegativeInfinity, double.PositiveInfinity);
 
     public override string ToString()
     {
