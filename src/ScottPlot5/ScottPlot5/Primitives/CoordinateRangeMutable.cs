@@ -7,8 +7,8 @@
 /// </summary>
 public sealed class CoordinateRangeMutable(double min, double max) : IEquatable<CoordinateRangeMutable> // TODO: rename to MutableCoordinateRange or something
 {
-    public double Min { get; set; } = min;
-    public double Max { get; set; } = max;
+    public double Min { get; private set; } = min;
+    public double Max { get; private set; } = max;
 
     public double TrueMin => Math.Min(Min, Max);
     public double TrueMax => Math.Max(Min, Max);
@@ -40,6 +40,23 @@ public sealed class CoordinateRangeMutable(double min, double max) : IEquatable<
         return IsInverted
             ? $"CoordinateRangeMutable [{TrueMin}, {TrueMax}] (inverted)"
             : $"CoordinateRangeMutable [{TrueMin}, {TrueMax}]";
+    }
+
+    // TODO: deprecate
+    /// <summary>
+    /// Reset this range to inverted infinite values to indicate the range has not yet been set
+    /// </summary>
+    public void Reset()
+    {
+        Set(double.PositiveInfinity, double.NegativeInfinity);
+        if (HasBeenSet)
+            throw new InvalidOperationException();
+    }
+
+    public void Set(double min, double max)
+    {
+        Min = min;
+        Max = max;
     }
 
     /// <summary>
@@ -105,11 +122,15 @@ public static class CoordinateRangeMutableHelper
         if (double.IsNaN(value))
             return;
 
+        double min = range.Min;
         if (double.IsNaN(range.Min) || value < range.Min)
-            range.Min = value;
+            min = value;
 
+        double max = range.Max;
         if (double.IsNaN(range.Max) || value > range.Max)
-            range.Max = value;
+            max = value;
+
+        range.Set(min, max);
     }
 
     // TODO: deprecate
@@ -131,54 +152,31 @@ public static class CoordinateRangeMutableHelper
         range.Expand(newRange.Max);
     }
 
-    // TODO: deprecate
-    /// <summary>
-    /// Reset this range to inverted infinite values to indicate the range has not yet been set
-    /// </summary>
-    public static void Reset(this CoordinateRangeMutable range)
-    {
-        range.Min = double.PositiveInfinity;
-        range.Max = double.NegativeInfinity;
-        if (range.HasBeenSet)
-            throw new InvalidOperationException();
-    }
-
-    public static void Set(this CoordinateRangeMutable range, double min, double max)
-    {
-        range.Min = min;
-        range.Max = max;
-    }
-
     public static void Set(this CoordinateRangeMutable range, CoordinateRange newRange)
     {
         if (newRange.IsInverted)
         {
-            range.Max = newRange.Min;
-            range.Min = newRange.Max;
+            range.Set(newRange.Max, newRange.Min);
         }
         else
         {
-            range.Min = newRange.Min;
-            range.Max = newRange.Max;
+            range.Set(newRange.Min, newRange.Max);
         }
     }
 
     public static void Set(this CoordinateRangeMutable range, CoordinateRangeMutable newRange)
     {
-        range.Min = newRange.Min;
-        range.Max = newRange.Max;
+        range.Set(newRange.Min, newRange.Max);
     }
 
     public static void Set(this CoordinateRangeMutable range, IAxis otherAxis)
     {
-        range.Min = otherAxis.Min;
-        range.Max = otherAxis.Max;
+        range.Set(otherAxis.Min, otherAxis.Max);
     }
 
     public static void Pan(this CoordinateRangeMutable range, double delta)
     {
-        range.Min += delta;
-        range.Max += delta;
+        range.Set(range.Min + delta, range.Max + delta);
     }
 
     public static void PanMouse(this CoordinateRangeMutable range, float mouseDeltaPx, float dataSizePx)
@@ -211,7 +209,6 @@ public static class CoordinateRangeMutableHelper
     {
         double spanLeftX = zoomTo - range.Min;
         double spanRightX = range.Max - zoomTo;
-        range.Min = zoomTo - spanLeftX / frac;
-        range.Max = zoomTo + spanRightX / frac;
+        range.Set(zoomTo - spanLeftX / frac, zoomTo + spanRightX / frac);
     }
 }

@@ -1,7 +1,5 @@
 ﻿using ScottPlot.AxisPanels;
 using ScottPlot.Grids;
-using System;
-using System.Linq;
 
 namespace ScottPlot;
 
@@ -411,17 +409,14 @@ public class AxisManager
 
     public void SetLimitsX(double left, double right, IXAxis xAxis)
     {
-        xAxis.Min = left;
-        xAxis.Max = right;
+        xAxis.Range.Set(left, right);
         if (xAxis.Range.HasBeenSet)
             AutoScaler.InvertedX = left > right;
     }
 
     public void SetLimitsY(double bottom, double top, IYAxis yAxis)
     {
-        yAxis.Min = bottom;
-        yAxis.Max = top;
-
+        yAxis.Range.Set(bottom, top);
         if (yAxis.Range.HasBeenSet)
             AutoScaler.InvertedY = bottom > top;
     }
@@ -1164,8 +1159,7 @@ public class AxisManager
             if ((rule.TargetAxis.Min == rule.SourceAxis.Min) && (rule.TargetAxis.Max == rule.SourceAxis.Max))
                 continue;
 
-            rule.TargetAxis.Min = rule.SourceAxis.Min;
-            rule.TargetAxis.Max = rule.SourceAxis.Max;
+            rule.TargetAxis.Range.Set(rule.SourceAxis.Min, rule.SourceAxis.Max);
             rule.TargetPlot.RenderManager.DisableAxisLimitsChangedEventOnNextRender = true;
             plotsNeedingUpdates.Add(rule.TargetPlot);
         }

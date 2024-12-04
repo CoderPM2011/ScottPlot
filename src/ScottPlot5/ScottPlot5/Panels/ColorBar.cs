@@ -1,6 +1,4 @@
-﻿using System.Data;
-
-namespace ScottPlot.Panels;
+﻿namespace ScottPlot.Panels;
 
 /// <summary>
 /// An axis panel which displays a colormap and range of values
@@ -158,8 +156,7 @@ public class ColorBar(IHasColorAxis source, Edge edge = Edge.Right) : IPanel
     private void GenerateTicks(PixelRect dataRect)
     {
         Range range = Source.GetRange();
-        Axis.Min = range.Min;
-        Axis.Max = range.Max;
+        Axis.Range.Set(range.Min, range.Max);
 
         float edgeLength = Edge.IsVertical()
             ? dataRect.Height

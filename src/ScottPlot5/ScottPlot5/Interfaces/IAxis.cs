@@ -13,8 +13,8 @@ public interface IAxis : IPanel
     /// </summary>
     CoordinateRangeMutable Range { get; } // TODO: don't expose this
 
-    double Min { get; set; }
-    double Max { get; set; }
+    double Min { get; }
+    double Max { get; }
 
     /// <summary>
     /// Get the pixel position of a coordinate given the location and size of the data area
