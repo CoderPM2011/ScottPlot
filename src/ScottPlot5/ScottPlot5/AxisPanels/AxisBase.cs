@@ -24,13 +24,11 @@ public abstract class AxisBase : LabelStyleProperties
     public double Min
     {
         get => Range.Min;
-        set => Range.Min = value;
     }
 
     public double Max
     {
         get => Range.Max;
-        set => Range.Max = value;
     }
 
     public override string ToString()

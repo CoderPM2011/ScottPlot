@@ -13,26 +13,22 @@ public class MinimumBoundary(IXAxis xAxis, IYAxis yAxis, AxisLimits limits) : IA
 
         if (XAxis.Range.Max < Limits.Right)
         {
-            XAxis.Range.Max = Limits.Right;
-            XAxis.Range.Min = Limits.Right - xSpan;
+            XAxis.Range.Set(Limits.Right - xSpan, Limits.Right);
         }
 
         if (XAxis.Range.Min > Limits.Left)
         {
-            XAxis.Range.Min = Limits.Left;
-            XAxis.Range.Max = Limits.Left + xSpan;
+            XAxis.Range.Set(Limits.Left, Limits.Left + xSpan);
         }
 
         if (YAxis.Range.Max < Limits.Top)
         {
-            YAxis.Range.Max = Limits.Top;
-            YAxis.Range.Min = Limits.Top - ySpan;
+            YAxis.Range.Set(Limits.Top - ySpan, Limits.Top);
         }
 
         if (YAxis.Range.Min > Limits.Bottom)
         {
-            YAxis.Range.Min = Limits.Bottom;
-            YAxis.Range.Max = Limits.Bottom + ySpan;
+            YAxis.Range.Set(Limits.Bottom, Limits.Bottom + ySpan);
         }
     }
 }
